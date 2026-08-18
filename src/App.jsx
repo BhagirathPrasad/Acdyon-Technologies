@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './App.css';
 
 // SVG Icons
@@ -34,7 +34,33 @@ const Icons = {
   ),
 };
 
+function LoginModal({ isOpen, onClose }) {
+  if (!isOpen) return null;
+  
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose}>&times;</button>
+        <h2>Welcome Back</h2>
+        <p>Enter your details to access Acdyon Flow.</p>
+        <form className="login-form" onSubmit={(e) => { e.preventDefault(); alert("Logged in successfully!"); onClose(); }}>
+          <div className="form-group">
+            <label>Email</label>
+            <input type="email" placeholder="engineer@acdyon.com" required />
+          </div>
+          <div className="form-group">
+            <label>Password</label>
+            <input type="password" placeholder="••••••••" required />
+          </div>
+          <button type="submit" className="btn-accent" style={{width: '100%', justifyContent: 'center', marginTop: '16px'}}>Sign In</button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 function App() {
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
   const revealRefs = useRef([]);
 
   useEffect(() => {
@@ -88,6 +114,7 @@ function App() {
 
   return (
     <>
+      <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
       <div className="container">
         <nav className="navbar">
           <div className="logo">
@@ -100,7 +127,7 @@ function App() {
             <a href="#" className="nav-link">Pricing</a>
             <a href="#" className="nav-link">Docs</a>
           </div>
-          <button className="btn-primary">Log In</button>
+          <button className="btn-primary" onClick={() => setIsLoginOpen(true)}>Log In</button>
         </nav>
 
         <header className="hero">
