@@ -74,7 +74,7 @@ export default function Auth() {
 
         <p className="auth-toggle">
           {isLogin ? "Don't have an account? " : "Already have an account? "}
-          <button type="button" onClick={() => setIsLogin(!isLogin)} className="text-gradient-accent" style={{background: 'none'}}>
+          <button type="button" onClick={() => setIsLogin(!isLogin)} className="text-gradient-accent toggle-btn">
             {isLogin ? 'Sign Up' : 'Log In'}
           </button>
         </p>
