@@ -1,191 +1,216 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Zap, Shield, Rocket, CheckCircle2, ArrowRight, Menu, X, Star, ChevronDown } from 'lucide-react';
 
-// SVG Icons
-const Icons = {
-  Rocket: () => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path>
-      <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path>
-      <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"></path>
-      <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"></path>
-    </svg>
-  ),
-  Zap: () => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-    </svg>
-  ),
-  Shield: () => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-    </svg>
-  ),
-  Check: () => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="20 6 9 17 4 12"></polyline>
-    </svg>
-  ),
-  ArrowRight: () => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="5" y1="12" x2="19" y2="12"></line>
-      <polyline points="12 5 19 12 12 19"></polyline>
-    </svg>
-  ),
-};
+const PLANS = [
+  {
+    name: 'Starter',
+    price: 'Free',
+    sub: 'forever',
+    features: ['5 pipelines', '500 builds/month', 'Community support', 'Basic analytics'],
+    cta: 'Get Started',
+    highlight: false,
+  },
+  {
+    name: 'Pro',
+    price: '₹2,499',
+    sub: 'per month',
+    features: ['Unlimited pipelines', '10,000 builds/month', 'Priority support', 'Advanced analytics', 'Custom environments', 'Team collaboration'],
+    cta: 'Start Free Trial',
+    highlight: true,
+  },
+  {
+    name: 'Enterprise',
+    price: 'Custom',
+    sub: 'contact us',
+    features: ['Everything in Pro', 'SSO & SAML', 'Dedicated infra', 'SLA guarantee', 'Custom integrations', 'Onboarding support'],
+    cta: 'Contact Sales',
+    highlight: false,
+  },
+];
+
+
+const FAQS = [
+  { q: 'How does Acdyon Flow differ from GitHub Actions?', a: 'Acdyon Flow adds AI-powered predictive caching, automatic parallelization, and one-click rollbacks on top of standard CI/CD primitives — meaning you get faster builds without writing complex config.' },
+  { q: 'Can I migrate from an existing CI/CD setup?', a: 'Yes. We provide migration guides and a CLI importer for GitHub Actions, CircleCI, and Jenkins. Most teams migrate in under 30 minutes.' },
+  { q: 'Is my code secure?', a: 'All pipeline runs happen in isolated microVMs that are destroyed after each build. We never store your source code beyond the duration of the build.' },
+  { q: 'What languages and frameworks are supported?', a: 'Any language. Acdyon Flow is language-agnostic — it detects your runtime automatically and sets up the environment accordingly.' },
+];
+
+// SVG Icons for pipeline steps
+const CheckSVG = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12"></polyline>
+  </svg>
+);
 
 export default function Landing() {
   const navigate = useNavigate();
   const revealRefs = useRef([]);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [openFaq, setOpenFaq] = useState(null);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    // Scroll Reveal Logic
     const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('active');
-        }
-      });
+      entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('active'); });
     }, { threshold: 0.1 });
-
-    revealRefs.current.forEach(ref => {
-      if (ref) observer.observe(ref);
-    });
-
+    revealRefs.current.forEach(ref => { if (ref) observer.observe(ref); });
     return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
-    // Konami Code Easter Egg
-    const konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
-    let konamiIndex = 0;
-
-    const handleKeyDown = (e) => {
-      if (e.key === konamiCode[konamiIndex]) {
-        konamiIndex++;
-        if (konamiIndex === konamiCode.length) {
-          // Trigger Easter Egg
-          document.body.classList.add('barrel-roll');
-          document.documentElement.classList.add('konami-active');
-          setTimeout(() => {
-            document.body.classList.remove('barrel-roll');
-          }, 2000);
-          konamiIndex = 0;
-        }
-      } else {
-        konamiIndex = 0;
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const addToRefs = (el) => {
-    if (el && !revealRefs.current.includes(el)) {
-      revealRefs.current.push(el);
-    }
+  useEffect(() => {
+    // Konami Code Easter Egg
+    const code = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+    let idx = 0;
+    const handler = (e) => {
+      if (e.key === code[idx]) { idx++; if (idx === code.length) { document.body.classList.add('barrel-roll'); setTimeout(() => document.body.classList.remove('barrel-roll'), 2000); idx = 0; } }
+      else idx = 0;
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
+  const addToRefs = (el) => { if (el && !revealRefs.current.includes(el)) revealRefs.current.push(el); };
+
+  const scrollTo = (id) => {
+    setMobileOpen(false);
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
+
+  const navLinks = [
+    { label: 'Product', id: 'product' },
+    { label: 'Features', id: 'features' },
+    { label: 'Pricing', id: 'pricing' },
+    { label: 'Docs', id: 'docs' },
+  ];
 
   return (
     <>
-      <div className="container">
-        <nav className="navbar">
-          <div className="logo">
-            <div className="logo-dot"></div>
+      {/* ── NAVBAR ── */}
+      <nav className={`landing-nav ${scrolled ? 'scrolled' : ''}`}>
+        <div className="landing-nav-inner">
+          <div className="logo" style={{ cursor: 'pointer' }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <div className="logo-dot" />
             Acdyon Flow
           </div>
-          <div className="nav-links">
-            <a href="#" className="nav-link">Product</a>
-            <a href="#" className="nav-link">Features</a>
-            <a href="#" className="nav-link">Pricing</a>
-            <a href="#" className="nav-link">Docs</a>
-          </div>
-          <button className="btn-primary" onClick={() => navigate('/auth')}>Log In</button>
-        </nav>
 
-        <header className="hero">
-          <div className="hero-badge reveal" ref={addToRefs}>
-            ✨ Acdyon Flow 2.0 is now live
+          <div className="nav-links desktop-nav">
+            {navLinks.map(l => (
+              <button key={l.id} className="nav-link" onClick={() => scrollTo(l.id)}>{l.label}</button>
+            ))}
           </div>
-          <h1 className="reveal delay-1" ref={addToRefs}>
-            Deploy faster. <br/>
-            <span className="text-gradient">No magic, just better</span> <br/>
-            <span className="text-gradient-accent">orchestration.</span>
-          </h1>
-          <p className="reveal delay-2" ref={addToRefs}>
-            Stop wrestling with YAML and waiting for slow pipelines. Acdyon Flow intelligently predicts caches, parallelizes tests, and ships your code up to 10x faster.
-          </p>
-          <div className="hero-actions reveal delay-3" ref={addToRefs}>
-            <button className="btn-accent" onClick={() => navigate('/auth')}>
-              Start Building Free <Icons.ArrowRight />
+
+          <div className="nav-actions">
+            <button className="btn-ghost" onClick={() => navigate('/auth')}>Log In</button>
+            <button className="btn-primary" onClick={() => navigate('/auth')}>Get Started</button>
+          </div>
+
+          <button className="mobile-menu-btn" onClick={() => setMobileOpen(o => !o)}>
+            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
+
+        {/* Mobile menu */}
+        {mobileOpen && (
+          <div className="mobile-nav">
+            {navLinks.map(l => (
+              <button key={l.id} className="mobile-nav-link" onClick={() => scrollTo(l.id)}>{l.label}</button>
+            ))}
+            <button className="btn-accent" style={{ width: '100%', justifyContent: 'center' }} onClick={() => navigate('/auth')}>
+              Get Started Free
             </button>
-            <button className="btn-secondary">View Documentation</button>
           </div>
-        </header>
+        )}
+      </nav>
 
-        <section className="showcase-section reveal" ref={addToRefs}>
-          <div className="glow-bg"></div>
-          <div className="dashboard-mockup">
-            <div className="mockup-header">
-              <div className="mac-btns">
-                <div className="mac-btn close"></div>
-                <div className="mac-btn minimize"></div>
-                <div className="mac-btn maximize"></div>
-              </div>
-              <div className="mockup-title">acdyon-flow ~ /production-deploy</div>
+      <div className="landing-body">
+
+        {/* ── HERO ── */}
+        <section className="hero-section" id="product">
+          <div className="container">
+            <div className="hero-badge reveal" ref={addToRefs}>✨ Acdyon Flow 2.0 is now live</div>
+            <h1 className="hero-h1 reveal delay-1" ref={addToRefs}>
+              Deploy faster.<br />
+              <span className="text-gradient">No magic, just better</span><br />
+              <span className="text-gradient-accent">orchestration.</span>
+            </h1>
+            <p className="hero-p reveal delay-2" ref={addToRefs}>
+              Stop wrestling with YAML and waiting for slow pipelines.<br />
+              Acdyon Flow intelligently predicts caches, parallelizes tests,<br />
+              and ships your code up to <strong>10x faster</strong>.
+            </p>
+            <div className="hero-actions reveal delay-3" ref={addToRefs}>
+              <button className="btn-accent" onClick={() => navigate('/auth')}>
+                Start Building Free <ArrowRight size={18} />
+              </button>
+              <button className="btn-secondary" onClick={() => scrollTo('docs')}>View Documentation</button>
             </div>
-            <div className="mockup-body">
-              <div className="mock-sidebar">
-                <div className="mock-nav-item">
-                  <div className="mock-icon"></div>
-                  <div className="mock-text"></div>
+
+            {/* Stats strip */}
+            <div className="stats-strip reveal" ref={addToRefs}>
+              {[['10x', 'Faster builds'], ['99.9%', 'Uptime SLA'], ['50k+', 'Deployments/day'], ['< 1min', 'Avg deploy time']].map(([n, l]) => (
+                <div key={l} className="stat-item">
+                  <span className="stat-num">{n}</span>
+                  <span className="stat-label">{l}</span>
                 </div>
-                <div className="mock-nav-item active">
-                  <div className="mock-icon"></div>
-                  <div className="mock-text"></div>
-                </div>
-                <div className="mock-nav-item">
-                  <div className="mock-icon"></div>
-                  <div className="mock-text"></div>
-                </div>
-              </div>
-              <div className="mock-main">
-                <div className="mock-card">
-                  <div className="pipeline-status">
-                    <div className="status-indicator">
-                      <div className="status-dot"></div>
-                      <div className="status-text">Deployment Successful</div>
-                    </div>
-                    <div className="status-time" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>45s total</div>
+              ))}
+            </div>
+          </div>
+
+          {/* Mockup */}
+          <div className="container">
+            <div className="showcase-section reveal" ref={addToRefs}>
+              <div className="glow-bg" />
+              <div className="dashboard-mockup">
+                <div className="mockup-header">
+                  <div className="mac-btns">
+                    <div className="mac-btn close" />
+                    <div className="mac-btn minimize" />
+                    <div className="mac-btn maximize" />
                   </div>
-                  <div className="pipeline-steps">
-                    <div className="step">
-                      <div className="step-icon"><Icons.Check /></div>
-                      <div className="step-label">Lint</div>
-                    </div>
-                    <div className="step">
-                      <div className="step-icon"><Icons.Check /></div>
-                      <div className="step-label">Test</div>
-                    </div>
-                    <div className="step">
-                      <div className="step-icon"><Icons.Check /></div>
-                      <div className="step-label">Build</div>
-                    </div>
-                    <div className="step">
-                      <div className="step-icon"><Icons.Check /></div>
-                      <div className="step-label">Deploy</div>
-                    </div>
-                  </div>
+                  <div className="mockup-title">acdyon-flow ~ /production-deploy</div>
                 </div>
-                <div className="terminal">
-                  <div className="terminal-line"><span className="info">~</span> <span style={{ color: '#fff' }}>flow deploy --env production</span></div>
-                  <div className="terminal-line"><span className="success">✓</span> Reused 24 cached layers</div>
-                  <div className="terminal-line"><span className="success">✓</span> All tests passed (3.2s)</div>
-                  <div className="terminal-line"><span className="success">✓</span> Artifact uploaded</div>
-                  <div className="terminal-line">
-                    <span className="success">✓</span> 
-                    <span className="typewriter" style={{ marginLeft: '8px' }}>Deployed to https://app.acdyon.dev</span>
+                <div className="mockup-body">
+                  <div className="mock-sidebar">
+                    {[false, true, false].map((active, i) => (
+                      <div key={i} className={`mock-nav-item ${active ? 'active' : ''}`}>
+                        <div className="mock-icon" /><div className="mock-text" />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mock-main">
+                    <div className="mock-card">
+                      <div className="pipeline-status">
+                        <div className="status-indicator">
+                          <div className="status-dot" />
+                          <div className="status-text">Deployment Successful</div>
+                        </div>
+                        <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>45s total</div>
+                      </div>
+                      <div className="pipeline-steps">
+                        {['Lint', 'Test', 'Build', 'Deploy'].map(s => (
+                          <div key={s} className="step">
+                            <div className="step-icon"><CheckSVG /></div>
+                            <div className="step-label">{s}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="terminal">
+                      <div className="terminal-line"><span className="info">~</span> <span style={{ color: '#fff' }}>flow deploy --env production</span></div>
+                      <div className="terminal-line"><span className="success">✓</span> Reused 24 cached layers</div>
+                      <div className="terminal-line"><span className="success">✓</span> All tests passed (3.2s)</div>
+                      <div className="terminal-line"><span className="success">✓</span> Artifact uploaded</div>
+                      <div className="terminal-line"><span className="success">✓</span> <span className="typewriter" style={{ marginLeft: '8px' }}>Deployed to https://app.acdyon.dev</span></div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -193,28 +218,143 @@ export default function Landing() {
           </div>
         </section>
 
-        <section className="features">
-          <div className="feature-card reveal" ref={addToRefs}>
-            <div className="feature-icon"><Icons.Zap /></div>
-            <h3>Predictive Caching</h3>
-            <p>Our agent analyzes your git tree to restore only the exact cache layers needed, shaving minutes off every build.</p>
-          </div>
-          <div className="feature-card reveal delay-1" ref={addToRefs}>
-            <div className="feature-icon"><Icons.Shield /></div>
-            <h3>Deterministic Environments</h3>
-            <p>Runs in isolated microVMs ensuring that what works on your machine works in the pipeline, every single time.</p>
-          </div>
-          <div className="feature-card reveal delay-2" ref={addToRefs}>
-            <div className="feature-icon"><Icons.Rocket /></div>
-            <h3>Instant Reverts</h3>
-            <p>Bad deploy? Acdyon Flow keeps a live snapshot of your previous successful build for one-click instantaneous rollbacks.</p>
+        {/* ── FEATURES ── */}
+        <section id="features" className="section-pad">
+          <div className="container">
+            <div className="section-heading reveal" ref={addToRefs}>
+              <div className="section-badge">Features</div>
+              <h2>Everything your team needs to ship with confidence</h2>
+              <p>Purpose-built for modern engineering teams that can't afford slow pipelines.</p>
+            </div>
+            <div className="features-grid">
+              {[
+                { Icon: Zap, title: 'Predictive Caching', desc: 'Our agent analyzes your git tree to restore only the exact cache layers needed, shaving minutes off every build.' },
+                { Icon: Shield, title: 'Deterministic Environments', desc: 'Runs in isolated microVMs ensuring that what works on your machine works in the pipeline, every single time.' },
+                { Icon: Rocket, title: 'Instant Reverts', desc: 'Bad deploy? Acdyon Flow keeps a live snapshot of your previous successful build for one-click instantaneous rollbacks.' },
+                { Icon: CheckCircle2, title: 'Smart Parallelization', desc: 'Automatically detects independent test suites and pipeline steps and runs them in parallel without any configuration.' },
+                { Icon: Star, title: 'Real-time Logs', desc: 'Stream live build logs directly in your browser. Filter by step, severity, or timestamp. Share a log link with your team.' },
+                { Icon: ArrowRight, title: 'One-Click Deploy', desc: 'Connect your GitHub repo and deploy to production with a single click. Zero YAML required to get started.' },
+              ].map(({ Icon, title, desc }, i) => (
+                <div key={title} className={`feature-card reveal delay-${i % 3}`} ref={addToRefs}>
+                  <div className="feature-icon"><Icon size={24} /></div>
+                  <h3>{title}</h3>
+                  <p>{desc}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
+
+        {/* ── PRICING ── */}
+        <section id="pricing" className="section-pad pricing-section">
+          <div className="container">
+            <div className="section-heading reveal" ref={addToRefs}>
+              <div className="section-badge">Pricing</div>
+              <h2>Simple, transparent pricing</h2>
+              <p>No hidden fees. No usage surprises. Cancel anytime.</p>
+            </div>
+            <div className="pricing-grid">
+              {PLANS.map((plan) => (
+                <div key={plan.name} className={`pricing-card reveal ${plan.highlight ? 'pricing-highlight' : ''}`} ref={addToRefs}>
+                  {plan.highlight && <div className="pricing-popular">Most Popular</div>}
+                  <div className="pricing-header">
+                    <div className="plan-name">{plan.name}</div>
+                    <div className="plan-price">{plan.price}</div>
+                    <div className="plan-sub">{plan.sub}</div>
+                  </div>
+                  <ul className="plan-features">
+                    {plan.features.map(f => (
+                      <li key={f}><CheckCircle2 size={15} /> {f}</li>
+                    ))}
+                  </ul>
+                  <button
+                    className={plan.highlight ? 'btn-accent' : 'btn-secondary'}
+                    style={{ width: '100%', justifyContent: 'center' }}
+                    onClick={() => navigate('/auth')}
+                  >
+                    {plan.cta}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── DOCS / FAQ ── */}
+        <section id="docs" className="section-pad">
+          <div className="container">
+            <div className="section-heading reveal" ref={addToRefs}>
+              <div className="section-badge">Docs</div>
+              <h2>Frequently Asked Questions</h2>
+              <p>Everything you need to know before you ship your first pipeline.</p>
+            </div>
+            <div className="faq-list">
+              {FAQS.map((faq, i) => (
+                <div key={i} className={`faq-item reveal ${openFaq === i ? 'open' : ''}`} ref={addToRefs}>
+                  <button className="faq-question" onClick={() => setOpenFaq(openFaq === i ? null : i)}>
+                    {faq.q}
+                    <ChevronDown size={18} className="faq-chevron" />
+                  </button>
+                  {openFaq === i && <p className="faq-answer">{faq.a}</p>}
+                </div>
+              ))}
+            </div>
+
+            {/* Docs links */}
+            <div className="docs-links reveal" ref={addToRefs}>
+              {[
+                { title: 'Quick Start Guide', desc: 'Deploy your first pipeline in under 5 minutes.' },
+                { title: 'CLI Reference', desc: 'Complete documentation for the acdyon CLI.' },
+                { title: 'API Reference', desc: 'Integrate Acdyon Flow into your own tools.' },
+                { title: 'Migration Guide', desc: 'Move from GitHub Actions, CircleCI, or Jenkins.' },
+              ].map(d => (
+                <a key={d.title} href="#docs" className="doc-card" onClick={e => e.preventDefault()}>
+                  <div className="doc-card-title">{d.title} <ArrowRight size={14} /></div>
+                  <div className="doc-card-desc">{d.desc}</div>
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── CTA BANNER ── */}
+        <section className="cta-banner reveal" ref={addToRefs}>
+          <div className="cta-glow" />
+          <div className="container" style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
+            <h2>Ready to ship 10x faster?</h2>
+            <p>Join thousands of engineering teams already using Acdyon Flow.</p>
+            <button className="btn-accent" onClick={() => navigate('/auth')} style={{ marginTop: '32px' }}>
+              Start for Free — no credit card needed <ArrowRight size={18} />
+            </button>
+          </div>
+        </section>
+
+        {/* ── FOOTER ── */}
+        <footer className="landing-footer">
+          <div className="container">
+            <div className="footer-grid">
+              <div>
+                <div className="logo" style={{ marginBottom: '12px' }}><div className="logo-dot" /> Acdyon Flow</div>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', lineHeight: 1.7 }}>The deployment platform built for<br />teams that move at speed.</p>
+              </div>
+              {[
+                { title: 'Product', items: ['Features', 'Pricing', 'Changelog', 'Roadmap'] },
+                { title: 'Developers', items: ['Documentation', 'API Reference', 'CLI', 'Status'] },
+                { title: 'Company', items: ['About', 'Blog', 'Careers', 'Contact'] },
+              ].map(col => (
+                <div key={col.title}>
+                  <div className="footer-col-title">{col.title}</div>
+                  {col.items.map(item => <div key={item} className="footer-link">{item}</div>)}
+                </div>
+              ))}
+            </div>
+            <div className="footer-bottom">
+              <p>© 2026 Acdyon Technologies. Engineered with care.</p>
+            </div>
+          </div>
+        </footer>
 
       </div>
-      <footer>
-        <p>&copy; 2026 Acdyon Technologies. Engineered with care.</p>
-      </footer>
     </>
   );
 }

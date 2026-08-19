@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Trash2, Edit2, Play, LogOut } from 'lucide-react';
+import { Plus, Trash2, Edit2, Play, LogOut, Settings, LayoutDashboard, Bell, User, Shield } from 'lucide-react';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -9,6 +9,9 @@ export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({ name: '', environment: 'Production' });
+  const [activeView, setActiveView] = useState('pipelines');
+  const [settingsData, setSettingsData] = useState({ displayName: '', emailNotifications: true, deployAlerts: true });
+  const [settingsSaved, setSettingsSaved] = useState(false);
 
   useEffect(() => {
     const currentUser = localStorage.getItem('acdyon_currentUser');
@@ -18,6 +21,8 @@ export default function Dashboard() {
       setUser(currentUser);
       const storedProjects = JSON.parse(localStorage.getItem(`acdyon_projects_${currentUser}`) || '[]');
       setProjects(storedProjects);
+      const storedSettings = JSON.parse(localStorage.getItem(`acdyon_settings_${currentUser}`) || 'null');
+      if (storedSettings) setSettingsData(storedSettings);
     }
   }, [navigate]);
 
@@ -55,6 +60,21 @@ export default function Dashboard() {
     saveProjects(projects.filter(p => p.id !== id));
   };
 
+  const handleRunPipeline = (id) => {
+    const updatedProjects = projects.map(p => p.id === id ? { ...p, status: 'Deploying...' } : p);
+    saveProjects(updatedProjects);
+
+    setTimeout(() => {
+      setProjects(prevProjects => {
+        const finishedProjects = prevProjects.map(p => 
+          p.id === id ? { ...p, status: 'Healthy', lastDeployed: new Date().toISOString() } : p
+        );
+        localStorage.setItem(`acdyon_projects_${user}`, JSON.stringify(finishedProjects));
+        return finishedProjects;
+      });
+    }, 2000);
+  };
+
   const openModal = (project = null) => {
     if (project) {
       setEditingId(project.id);
@@ -71,6 +91,19 @@ export default function Dashboard() {
     setEditingId(null);
   };
 
+  const handleSaveSettings = (e) => {
+    e.preventDefault();
+    localStorage.setItem(`acdyon_settings_${user}`, JSON.stringify(settingsData));
+    setSettingsSaved(true);
+    setTimeout(() => setSettingsSaved(false), 2500);
+  };
+
+  const handleClearAllPipelines = () => {
+    if (window.confirm('Are you sure? This will permanently delete all your pipelines.')) {
+      saveProjects([]);
+    }
+  };
+
   if (!user) return null;
 
   return (
@@ -81,8 +114,20 @@ export default function Dashboard() {
           Acdyon Flow
         </div>
         <nav className="sidebar-nav">
-          <a href="#" className="sidebar-link active">Pipelines</a>
-          <a href="#" className="sidebar-link">Settings</a>
+          <a
+            href="#"
+            className={`sidebar-link ${activeView === 'pipelines' ? 'active' : ''}`}
+            onClick={e => { e.preventDefault(); setActiveView('pipelines'); }}
+          >
+            <LayoutDashboard size={16} style={{ flexShrink: 0 }} /> Pipelines
+          </a>
+          <a
+            href="#"
+            className={`sidebar-link ${activeView === 'settings' ? 'active' : ''}`}
+            onClick={e => { e.preventDefault(); setActiveView('settings'); }}
+          >
+            <Settings size={16} style={{ flexShrink: 0 }} /> Settings
+          </a>
         </nav>
         <div className="sidebar-footer">
           <div className="user-email">{user}</div>
@@ -91,45 +136,139 @@ export default function Dashboard() {
       </aside>
 
       <main className="dashboard-content">
-        <div className="dashboard-header">
-          <div>
-            <h1>Pipelines</h1>
-            <p style={{ color: 'var(--text-secondary)' }}>Manage and monitor your deployments.</p>
-          </div>
-          <button className="btn-accent" onClick={() => openModal()}>
-            <Plus size={18} /> New Pipeline
-          </button>
-        </div>
-
-        <div className="projects-grid">
-          {projects.length === 0 ? (
-            <div className="empty-state">
-              <p>No pipelines found. Create one to get started.</p>
+        {activeView === 'pipelines' ? (
+          <>
+            <div className="dashboard-header">
+              <div>
+                <h1>Pipelines</h1>
+                <p style={{ color: 'var(--text-secondary)' }}>Manage and monitor your deployments.</p>
+              </div>
+              <button className="btn-accent" onClick={() => openModal()}>
+                <Plus size={18} /> New Pipeline
+              </button>
             </div>
-          ) : (
-            projects.map(project => (
-              <div key={project.id} className="project-card">
-                <div className="project-header">
-                  <h3>{project.name}</h3>
-                  <span className={`env-badge ${project.environment.toLowerCase()}`}>{project.environment}</span>
+
+            <div className="projects-grid">
+              {projects.length === 0 ? (
+                <div className="empty-state">
+                  <p>No pipelines found. Create one to get started.</p>
                 </div>
-                <div className="project-body">
-                  <div className="status-row">
-                    <div className="status-dot"></div> {project.status}
+              ) : (
+                projects.map(project => (
+                  <div key={project.id} className="project-card">
+                    <div className="project-header">
+                      <h3>{project.name}</h3>
+                      <span className={`env-badge ${project.environment.toLowerCase()}`}>{project.environment}</span>
+                    </div>
+                    <div className="project-body">
+                      <div className="status-row">
+                        <div className="status-dot"></div> {project.status}
+                      </div>
+                      <div className="last-deploy">
+                        Deployed: {new Date(project.lastDeployed).toLocaleDateString()}
+                      </div>
+                    </div>
+                    <div className="project-actions">
+                      <button className="action-btn" onClick={() => handleRunPipeline(project.id)} title="Run Pipeline"><Play size={16} /></button>
+                      <button className="action-btn" onClick={() => openModal(project)} title="Edit"><Edit2 size={16} /></button>
+                      <button className="action-btn danger" onClick={() => handleDelete(project.id)} title="Delete"><Trash2 size={16} /></button>
+                    </div>
                   </div>
-                  <div className="last-deploy">
-                    Deployed: {new Date(project.lastDeployed).toLocaleDateString()}
-                  </div>
+                ))
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="dashboard-header">
+              <div>
+                <h1>Settings</h1>
+                <p style={{ color: 'var(--text-secondary)' }}>Manage your account and preferences.</p>
+              </div>
+            </div>
+
+            <div className="settings-layout">
+              {/* Profile Section */}
+              <div className="settings-section">
+                <div className="settings-section-header">
+                  <User size={18} />
+                  <h3>Profile</h3>
                 </div>
-                <div className="project-actions">
-                  <button className="action-btn" onClick={() => {}} title="Run Pipeline"><Play size={16} /></button>
-                  <button className="action-btn" onClick={() => openModal(project)} title="Edit"><Edit2 size={16} /></button>
-                  <button className="action-btn danger" onClick={() => handleDelete(project.id)} title="Delete"><Trash2 size={16} /></button>
+                <form onSubmit={handleSaveSettings} className="settings-form">
+                  <div className="form-group">
+                    <label>Email Address</label>
+                    <input type="text" value={user} disabled style={{ opacity: 0.5, cursor: 'not-allowed' }} />
+                  </div>
+                  <div className="form-group">
+                    <label>Display Name</label>
+                    <input
+                      type="text"
+                      placeholder="Your name"
+                      value={settingsData.displayName}
+                      onChange={e => setSettingsData({ ...settingsData, displayName: e.target.value })}
+                    />
+                  </div>
+                  <button type="submit" className="btn-accent" style={{ alignSelf: 'flex-start', padding: '10px 24px', fontSize: '0.9rem' }}>
+                    {settingsSaved ? '✓ Saved!' : 'Save Changes'}
+                  </button>
+                </form>
+              </div>
+
+              {/* Notifications Section */}
+              <div className="settings-section">
+                <div className="settings-section-header">
+                  <Bell size={18} />
+                  <h3>Notifications</h3>
+                </div>
+                <div className="settings-toggles">
+                  <div className="settings-toggle-row">
+                    <div>
+                      <div className="toggle-label">Email Notifications</div>
+                      <div className="toggle-desc">Receive email summaries for pipeline activity.</div>
+                    </div>
+                    <label className="toggle-switch">
+                      <input
+                        type="checkbox"
+                        checked={settingsData.emailNotifications}
+                        onChange={e => setSettingsData({ ...settingsData, emailNotifications: e.target.checked })}
+                      />
+                      <span className="toggle-slider"></span>
+                    </label>
+                  </div>
+                  <div className="settings-toggle-row">
+                    <div>
+                      <div className="toggle-label">Deploy Alerts</div>
+                      <div className="toggle-desc">Get notified when a pipeline finishes deploying.</div>
+                    </div>
+                    <label className="toggle-switch">
+                      <input
+                        type="checkbox"
+                        checked={settingsData.deployAlerts}
+                        onChange={e => setSettingsData({ ...settingsData, deployAlerts: e.target.checked })}
+                      />
+                      <span className="toggle-slider"></span>
+                    </label>
+                  </div>
                 </div>
               </div>
-            ))
-          )}
-        </div>
+
+              {/* Danger Zone */}
+              <div className="settings-section danger-zone">
+                <div className="settings-section-header">
+                  <Shield size={18} style={{ color: '#ef4444' }} />
+                  <h3 style={{ color: '#ef4444' }}>Danger Zone</h3>
+                </div>
+                <div className="danger-row">
+                  <div>
+                    <div className="toggle-label">Delete All Pipelines</div>
+                    <div className="toggle-desc">Permanently remove all your pipeline configurations. This cannot be undone.</div>
+                  </div>
+                  <button className="btn-danger" onClick={handleClearAllPipelines}>Clear All</button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </main>
 
       {/* CRUD Modal */}
